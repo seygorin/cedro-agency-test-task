@@ -1,5 +1,6 @@
 import React from 'react'
 import {ExtendedOption, CustomInputProps} from './Select/Select'
+import X from '../assets/icons/ex.svg'
 
 const CustomTagInput: React.FC<CustomInputProps<ExtendedOption>> = ({
   value,
@@ -8,24 +9,25 @@ const CustomTagInput: React.FC<CustomInputProps<ExtendedOption>> = ({
   onInputChange,
   onRemove,
 }) => {
+  const options = Array.isArray(value) ? value : value ? [value] : []
+
   return (
-    <div className='custom-tag-input'>
-      {Array.isArray(value) &&
-        value.map((option) => (
-          <span key={option.value} className='tag'>
-            {option.label}
-            <button onClick={() => onRemove(option)} className='remove-tag'>
-              ×
-            </button>
-          </span>
-        ))}
-      {(!Array.isArray(value) || value.length === 0) && (
+    <div className='selected-options'>
+      {options.map((option) => (
+        <span key={option.value} className='select-label'>
+          {option.label}
+          <button onClick={() => onRemove(option)}>
+            <img src={X} alt='delete' />
+          </button>
+        </span>
+      ))}
+      {options.length === 0 && (
         <input
           type='text'
           value={searchTerm}
           onChange={onInputChange}
           placeholder={placeholder}
-          className='tag-input'
+          className='search-input'
         />
       )}
     </div>
