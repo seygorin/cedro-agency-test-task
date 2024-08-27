@@ -1,0 +1,70 @@
+/* ActionSheetDropdown styles */
+.option-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 8px;
+  font-size: 24px;
+}
+
+.option-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-grow: 1;
+}
+
+.option-label {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.option-subtitle {
+  font-size: 13px;
+  color: hsla(284, 48%, 6%, 0.4);
+}
+
+/* MultiSelectDropdown styles */
+.option-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+
+.option-content {
+  flex-grow: 1;
+}
+
+/* ComboboxDropdown styles */
+.create-option-icon {
+  display: flex;
+  margin-right: 8px;
+}
+
+.create-option-icon img {
+  width: 14px;
+  height: 14px;
+}
+
+.create-option-text {
+  font-size: 15px;
+}
+
+.create-option:hover {
+  background-color: #f0f7ff;
+}
+
+.no-results {
+  padding: 7px 12px;
+  color: hsla(284, 48%, 6%, 0.4);
+  font-size: 12px;
+}
+
+.avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}

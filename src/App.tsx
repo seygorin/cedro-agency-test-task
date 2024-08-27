@@ -1,44 +1,53 @@
 import React, {useState} from 'react'
 import './App.css'
-import Select, {Option} from './components/Select/Select'
-import {products, actionOptions, people, tags} from './data/mockData'
+import Select, {ExtendedOption} from './components/Select/Select'
+import {
+  products,
+  actionOptions,
+  people,
+  tags as initialTags,
+} from './data/mockData'
+import ActionSheetDropdown from './components/ActionSheetDropdown'
+import MultiSelectDropdown from './components/MultiSelectDropdown'
+import ComboboxDropdown from './components/ComboboxDropdown'
+import CustomPeopleLabel, {PeopleOption} from './components/CustomPeopleLabel'
+import CustomTagInput from './components/CustomTagInput'
 
 const App: React.FC = () => {
-  const [productValue, setProductValue] = useState<Option | null>(null)
-  const [actionValue, setActionValue] = useState<Option | null>(null)
-  const [selectedPeople, setSelectedPeople] = useState<Option[]>([])
-  const [selectedTags, setSelectedTags] = useState<Option[]>([])
+  const [productValue, setProductValue] = useState<ExtendedOption | null>(null)
+  const [actionValue, setActionValue] = useState<ExtendedOption | null>(null)
+  const [selectedPeople, setSelectedPeople] = useState<PeopleOption[]>([])
+  const [selectedTags, setSelectedTags] = useState<ExtendedOption[]>([])
+  const [tags, setTags] = useState<ExtendedOption[]>(initialTags)
 
-  const handleProductChange = (value: Option | Option[] | null) => {
-    if (value && !Array.isArray(value)) {
-      setProductValue(value)
-    } else {
-      setProductValue(null)
-    }
+  const handleProductChange = (
+    value: ExtendedOption | ExtendedOption[] | null
+  ) => {
+    setProductValue(value as ExtendedOption | null)
   }
 
-  const handleActionChange = (value: Option | Option[] | null) => {
-    if (value && !Array.isArray(value)) {
-      setActionValue(value)
-    } else {
-      setActionValue(null)
-    }
+  const handleActionChange = (
+    value: ExtendedOption | ExtendedOption[] | null
+  ) => {
+    setActionValue(value as ExtendedOption | null)
   }
 
-  const handlePeopleChange = (value: Option | Option[] | null) => {
-    if (Array.isArray(value)) {
-      setSelectedPeople(value)
-    } else {
-      setSelectedPeople([])
-    }
+  const handlePeopleChange = (value: PeopleOption | PeopleOption[] | null) => {
+    setSelectedPeople(value as PeopleOption[])
   }
 
-  const handleTagChange = (value: Option | Option[] | null) => {
-    if (Array.isArray(value)) {
-      setSelectedTags(value)
-    } else {
-      setSelectedTags([])
+  const handleTagChange = (value: ExtendedOption | ExtendedOption[] | null) => {
+    setSelectedTags(value as ExtendedOption[])
+  }
+
+  const handleCreateTag = (inputValue: string) => {
+    const newTag: ExtendedOption = {
+      id: Date.now(),
+      value: inputValue.toLowerCase(),
+      label: inputValue,
     }
+    setTags((prevTags) => [...prevTags, newTag])
+    setSelectedTags((prevSelected) => [...prevSelected, newTag])
   }
 
   return (
@@ -53,7 +62,6 @@ const App: React.FC = () => {
             onChange={handleProductChange}
             placeholder='Select a product'
             searchable
-            withPadding
           />
         </div>
 
@@ -64,21 +72,22 @@ const App: React.FC = () => {
             value={actionValue}
             onChange={handleActionChange}
             placeholder='Select an action'
-            variant='action-sheet'
+            customDropdown={ActionSheetDropdown}
             searchable
           />
         </div>
 
         <div className='select-column'>
           <h2>Multi Select (People)</h2>
-          <Select
-            options={people}
+          <Select<PeopleOption>
+            options={people as PeopleOption[]}
             value={selectedPeople}
             onChange={handlePeopleChange}
             placeholder='Select people'
             multiple
             searchable
-            variant='multi-select'
+            customDropdown={MultiSelectDropdown}
+            customLabel={CustomPeopleLabel}
           />
         </div>
 
@@ -89,11 +98,12 @@ const App: React.FC = () => {
             value={selectedTags}
             onChange={handleTagChange}
             placeholder='Enter tags'
-            variant='tags'
             multiple
             creatable
             searchable
-            tokenSeparators={[',', ' ']}
+            customDropdown={ComboboxDropdown}
+            customInput={CustomTagInput}
+            onCreateOption={handleCreateTag}
           />
         </div>
       </div>

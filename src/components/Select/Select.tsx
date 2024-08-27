@@ -1,71 +1,77 @@
 import React, {useState, useRef, useEffect} from 'react'
 import './Select.css'
-import checkmarkIcon from '../../assets/icons/checkmark.svg'
+import ArrowDown from '../../assets/icons/arrow-down.svg'
+import ArrowUp from '../../assets/icons/arrow-up.svg'
+import X from '../../assets/icons/ex.svg'
 
-export type Option = {
-  id: string | number
-  label: string
+export type BaseOption = {
   value: string | number
+  label: string
+}
+
+export type ExtendedOption = BaseOption & {
+  id?: number
   subtitle?: string
   image?: string
-  emoji?: string
-  desc?: string
   avatar?: string
   firstName?: string
   lastName?: string
 }
 
-type SelectProps = {
-  options: Option[]
-  value: Option | Option[] | null
-  onChange: (value: Option | Option[] | null) => void
+export type Option<T extends BaseOption = ExtendedOption> = T
+
+type SelectProps<T extends BaseOption> = {
+  options: T[]
+  value: T | T[] | null
+  onChange: (value: T | T[] | null) => void
   multiple?: boolean
   searchable?: boolean
   creatable?: boolean
   placeholder?: string
   onCreateOption?: (inputValue: string) => void
-  status?: 'error'
-  optionRender?: (option: Option) => React.ReactNode
-  withPadding?: boolean
-  variant?: 'default' | 'action-sheet' | 'combobox' | 'multi-select' | 'tags'
-  tokenSeparators?: string[]
-  customDropdown?: React.ComponentType<CustomDropdownProps>
-  customLabel?: React.ComponentType<CustomLabelProps>
+  customDropdown?: React.ComponentType<CustomDropdownProps<T>>
+  customLabel?: React.ComponentType<CustomLabelProps<T>>
+  customInput?: React.ComponentType<CustomInputProps<T>>
+  renderOption?: (option: T) => React.ReactNode
 }
 
-type CustomDropdownProps = {
-  options: Option[]
-  value: Option | Option[] | null
-  onSelect: (option: Option) => void
+export type CustomInputProps<T extends BaseOption> = {
+  value: T | T[] | null
+  searchTerm: string
+  placeholder: string
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onRemove: (option: T) => void
+}
+
+export type CustomDropdownProps<T extends BaseOption> = {
+  options: T[]
+  value: T | T[] | null
+  onSelect: (option: T) => void
   searchTerm: string
   multiple: boolean
-  variant: SelectProps['variant']
+  onCreateOption?: (inputValue: string) => void
 }
 
-type CustomLabelProps = {
-  option: Option
-  onRemove: (option: Option) => void
+export type CustomLabelProps<T extends BaseOption> = {
+  option: T
+  onRemove: (option: T) => void
 }
-
-const Select: React.FC<SelectProps> = ({
+function Select<T extends Option>({
   options,
   value,
   onChange,
   multiple = false,
+  searchable = false,
   creatable = false,
   placeholder = 'Select...',
   onCreateOption,
-  status,
-  optionRender,
-  withPadding = false,
-  variant = 'default',
-  tokenSeparators = [','],
   customDropdown: CustomDropdown,
   customLabel: CustomLabel,
-}) => {
+  customInput: CustomInput,
+  renderOption,
+}: SelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [internalError, setInternalError] = useState(false)
   const selectRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -78,19 +84,21 @@ const Select: React.FC<SelectProps> = ({
         setIsOpen(false)
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleToggle = () => setIsOpen(!isOpen)
+  const handleToggle = () => {
+    setIsOpen(!isOpen)
+    if (!isOpen && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }
 
-  const handleSelect = (option: Option) => {
-    if (multiple || variant === 'tags') {
-      const newValue = Array.isArray(value) ? [...value] : []
-      const index = newValue.findIndex((v) => v.id === option.id)
+  const handleSelect = (option: T) => {
+    if (multiple) {
+      const newValue = Array.isArray(value) ? value.slice() : []
+      const index = newValue.findIndex((v) => v.value === option.value)
       if (index !== -1) {
         newValue.splice(index, 1)
       } else {
@@ -102,210 +110,95 @@ const Select: React.FC<SelectProps> = ({
       setIsOpen(false)
     }
     setSearchTerm('')
-    setInternalError(false)
   }
 
-  const handleRemove = (optionToRemove: Option) => {
-    if ((multiple || variant === 'tags') && Array.isArray(value)) {
-      const newValue = value.filter((v) => v.id !== optionToRemove.id)
-      onChange(newValue)
+  const handleRemove = (option: T) => {
+    if (multiple && Array.isArray(value)) {
+      onChange(value.filter((v) => v.value !== option.value))
     } else {
       onChange(null)
     }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value
-    setSearchTerm(inputValue)
+    setSearchTerm(e.target.value)
     setIsOpen(true)
-
-    if (variant === 'tags') {
-      const lastChar = inputValue[inputValue.length - 1]
-      if (tokenSeparators.includes(lastChar)) {
-        const newTag = inputValue.slice(0, -1).trim()
-        if (newTag) {
-          handleCreateTag(newTag)
-        }
-      }
-    }
-    const hasMatches = options.some((option) =>
-      option.label.toLowerCase().includes(inputValue.toLowerCase())
-    )
-    setInternalError(!hasMatches && inputValue !== '')
   }
 
-  const handleCreateTag = (tag: string) => {
-    const newOption: Option = {
-      id: Date.now(),
-      label: tag,
-      value: tag.toLowerCase(),
-    }
-    handleSelect(newOption)
-    if (onCreateOption) {
-      onCreateOption(tag)
+  const handleCreateOption = () => {
+    if (creatable && onCreateOption && searchTerm) {
+      onCreateOption(searchTerm)
+      setSearchTerm('')
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchTerm) {
-      e.preventDefault()
-      if (variant === 'tags' || creatable) {
-        handleCreateTag(searchTerm)
-      } else if (filteredOptions.length > 0) {
-        handleSelect(filteredOptions[0])
-      }
-    }
-  }
+  const filteredOptions = searchable
+    ? options.filter((option) =>
+        option.label.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : options
 
-  const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(searchTerm.toLowerCase())
+  const renderDefaultOption = (option: T) => (
+    <div>{renderOption ? renderOption(option) : option.label}</div>
   )
 
-  const getSelectClasses = () => {
-    let classes = 'select-container'
-    if (withPadding) classes += ' with-padding'
-    if (status === 'error' || internalError) classes += ' error'
-    if (variant === 'tags') classes += ' tags'
-    return classes
-  }
-
-  const renderOption = (option: Option) => {
-    if (optionRender) {
-      return optionRender(option)
-    }
-
-    const isSelected = Array.isArray(value)
-      ? value.some((v) => v.id === option.id)
-      : value && (value as Option).id === option.id
-
-    switch (variant) {
-      case 'action-sheet':
-        return (
-          <div className='action-sheet-option'>
-            <div className='option-image'>{option.image}</div>
-            <div className='option-content'>
-              <div className='option-label'>{option.label}</div>
-              {option.subtitle && (
-                <div className='option-subtitle'>{option.subtitle}</div>
-              )}
-            </div>
-            {isSelected && (
-              <span className='option-checkmark'>
-                <img
-                  src={checkmarkIcon}
-                  alt='Selected'
-                  width='22'
-                  height='22'
-                />
-              </span>
-            )}
-          </div>
-        )
-      case 'multi-select':
-        return (
-          <div className='multi-select-option'>
-            {option.avatar && (
-              <img
-                src={option.avatar}
-                alt={option.label}
-                className='option-avatar'
-              />
-            )}
-            <div className='option-content'>
-              <div className='option-title'>{option.label}</div>
-              {option.subtitle && (
-                <div className='option-subtitle'>{option.subtitle}</div>
-              )}
-            </div>
-
-            {isSelected && (
-              <span className='option-checkmark'>
-                <img
-                  src={checkmarkIcon}
-                  alt='Selected'
-                  width='22'
-                  height='22'
-                />
-              </span>
-            )}
-          </div>
-        )
-      case 'tags':
-        return (
-          <div className='multi-select-option'>
-            {option.emoji && (
-              <span className='option-emoji'>{option.emoji}</span>
-            )}
-            <span className='option-label'>{option.label}</span>
-            {option.desc && <span className='option-desc'>{option.desc}</span>}
-          </div>
-        )
-      default:
-        return (
-          <div className='default-option'>
-            {option.image && (
-              <span className='option-image'>{option.image}</span>
-            )}
-            <span className='option-label'>{option.label}</span>
-          </div>
-        )
-    }
-  }
-
-  const renderSelectedOption = (option: Option) => {
-    if (CustomLabel) {
-      return (
-        <CustomLabel option={option} onRemove={() => handleRemove(option)} />
-      )
-    }
-
-    return (
-      <span key={option.id} className='selected-option'>
-        {option.avatar && (
-          <img
-            src={option.avatar}
-            alt={option.label}
-            className='option-avatar-small'
-          />
-        )}
-        {option.firstName && option.lastName
-          ? `${option.lastName} ${option.firstName.charAt(0)}.`
-          : option.label}
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            handleRemove(option)
-          }}
-        >
-          ×
-        </button>
-      </span>
-    )
-  }
+  const renderDefaultLabel = (option: T) => (
+    <div className='select-label'>
+      {option.label}
+      <button onClick={() => handleRemove(option)}>
+        <img src={X} alt='delete' />
+      </button>
+    </div>
+  )
 
   return (
-    <div className={getSelectClasses()} ref={selectRef}>
+    <div className='select-container' ref={selectRef}>
       <div className='select-input' onClick={handleToggle}>
-        {(multiple || variant === 'tags') &&
-        Array.isArray(value) &&
-        value.length > 0 ? (
+        {CustomInput ? (
+          <CustomInput
+            value={value}
+            searchTerm={searchTerm}
+            placeholder={placeholder}
+            onInputChange={handleInputChange}
+            onRemove={handleRemove}
+          />
+        ) : (
           <div className='selected-options'>
-            {value.map(renderSelectedOption)}
+            {multiple &&
+              Array.isArray(value) &&
+              value.map((v) =>
+                CustomLabel ? (
+                  <CustomLabel
+                    key={v.value}
+                    option={v}
+                    onRemove={handleRemove}
+                  />
+                ) : (
+                  <React.Fragment key={v.value}>
+                    {renderDefaultLabel(v)}
+                  </React.Fragment>
+                )
+              )}
+            <input
+              ref={inputRef}
+              type='text'
+              value={searchTerm}
+              onChange={handleInputChange}
+              placeholder={
+                value && !Array.isArray(value) ? value.label : placeholder
+              }
+              readOnly={!searchable}
+              className='search-input'
+            />
           </div>
-        ) : null}
-        <input
-          ref={inputRef}
-          type='text'
-          value={searchTerm}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          placeholder={
-            value && !Array.isArray(value)
-              ? (value as Option).label
-              : placeholder
-          }
-        />
-        <span className='select-arrow'>{isOpen ? '▲' : '▼'}</span>
+        )}
+        <span>
+          {isOpen ? (
+            <img src={ArrowUp} alt='Arrow Up' />
+          ) : (
+            <img src={ArrowDown} alt='Arrow Down' />
+          )}
+        </span>
       </div>
       {isOpen &&
         (CustomDropdown ? (
@@ -315,35 +208,33 @@ const Select: React.FC<SelectProps> = ({
             onSelect={handleSelect}
             searchTerm={searchTerm}
             multiple={multiple}
-            variant={variant}
+            onCreateOption={handleCreateOption}
           />
         ) : (
           <div className='select-dropdown'>
             <ul className='options-list'>
               {filteredOptions.map((option) => (
                 <li
-                  key={option.id}
+                  key={option.value}
                   onClick={() => handleSelect(option)}
                   className={`option ${
-                    (multiple || variant === 'tags') &&
-                    Array.isArray(value) &&
-                    value.some((v) => v.id === option.id)
+                    (multiple &&
+                      Array.isArray(value) &&
+                      value.some((v) => v.value === option.value)) ||
+                    (!multiple && value && (value as T).value === option.value)
                       ? 'selected'
                       : ''
                   }`}
                 >
-                  {renderOption(option)}
+                  {renderDefaultOption(option)}
                 </li>
               ))}
-              {(creatable || variant === 'tags') &&
+              {creatable &&
                 searchTerm &&
                 !filteredOptions.some(
                   (o) => o.label.toLowerCase() === searchTerm.toLowerCase()
                 ) && (
-                  <li
-                    className='create-option'
-                    onClick={() => handleCreateTag(searchTerm)}
-                  >
+                  <li className='create-option' onClick={handleCreateOption}>
                     Create "{searchTerm}"
                   </li>
                 )}

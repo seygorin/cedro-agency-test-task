@@ -1,4 +1,6 @@
 import {Option} from '../components/Select/Select'
+import {PeopleOption} from '../components/CustomPeopleLabel'
+
 import avatar1 from '../assets/Avatars-1.png'
 import avatar2 from '../assets/Avatars-2.png'
 import avatar3 from '../assets/Avatars-3.png'
@@ -9,6 +11,11 @@ export const products: Option[] = [
   {id: 3, label: 'Cherry', value: 'cherry'},
   {id: 4, label: 'Date', value: 'date'},
   {id: 5, label: 'Elderberry', value: 'elderberry'},
+  {id: 6, label: 'Apple1', value: 'apple1'},
+  {id: 7, label: 'Banana1', value: 'banana1'},
+  {id: 8, label: 'Cherry1', value: 'cherry1'},
+  {id: 9, label: 'Date1', value: 'date1'},
+  {id: 10, label: 'Elderberry1', value: 'elderberry1'},
 ]
 
 export const actionOptions: Option[] = [
@@ -35,7 +42,7 @@ export const actionOptions: Option[] = [
   },
 ]
 
-export const people: Option[] = [
+export const people: PeopleOption[] = [
   {
     id: 1,
     label: 'Соловьёв Александр',

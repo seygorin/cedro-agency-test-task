@@ -1,50 +1,60 @@
-# React + TypeScript + Vite
+# Custom Select Component
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project implements a flexible and customizable Select component for React applications. It provides a rich set of features to enhance user interaction and data selection in various scenarios.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Multiple Selection Modes**: Supports both single and multiple selection.
+- **Flexible Data Handling**: Works with various data types and formats.
+- **Customizable Dropdown**: Offers a default dropdown with the option to provide a custom implementation.
+- **Customizable Labels**: Supports custom rendering of selected option labels.
+- **Search Functionality**: Enables users to search through options.
+- **Option Creation**: Allows creation of new options on-the-fly.
+- **Removable Options**: Users can remove selected options easily.
+- **Various Display Variants**:
+  - Default Select
+  - Action Sheet
+  - Multi-Select
+  - Tags / Combobox
 
-## Expanding the ESLint configuration
+## Component Variants
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+1. **Default Select**: A standard dropdown for selecting single items.
+2. **Action Sheet**: Displays options with additional details and icons.
+3. **Multi-Select**: Allows selection of multiple items, often used for selecting people or categories.
+4. **Combobox with Tags**: Enables selection and creation of multiple tags.
 
-- Configure the top-level `parserOptions` property like this:
+## Key Props
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+- `options`: Array of selectable options.
+- `value`: Currently selected option(s).
+- `onChange`: Callback function for handling selection changes.
+- `multiple`: Enables multi-select mode when true.
+- `searchable`: Enables search functionality when true.
+- `creatable`: Allows creation of new options when true.
+- `placeholder`: Placeholder text for the select input.
+- `variant`: Specifies the display variant of the select component.
+- `customDropdown`: Optional prop for providing a custom dropdown component.
+- `customLabel`: Optional prop for providing a custom label component.
+
+## Usage
+
+```jsx
+import Select from './components/Select/Select'
+
+// Example usage
+;<Select
+  options={options}
+  value={selectedValue}
+  onChange={handleChange}
+  placeholder='Select an option'
+  searchable
+  multiple
+/>
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Getting Started
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Start the development server: `npm run dev`
