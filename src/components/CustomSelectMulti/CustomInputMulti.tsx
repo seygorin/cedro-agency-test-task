@@ -1,6 +1,6 @@
 import React from 'react'
-import {Option, CustomLabelProps} from './Select/Select'
-import X from '../assets/icons/ex.svg'
+import {Option, CustomLabelProps} from '../Select'
+import X from '../../assets/icons/ex.svg'
 
 export interface PeopleOption extends Option {
   firstName: string

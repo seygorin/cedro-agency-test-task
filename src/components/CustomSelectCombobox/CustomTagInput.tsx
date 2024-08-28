@@ -1,6 +1,6 @@
 import React from 'react'
-import {ExtendedOption, CustomInputProps} from './Select/Select'
-import X from '../assets/icons/ex.svg'
+import {ExtendedOption, CustomInputProps} from '../Select'
+import X from '../../assets/icons/ex.svg'
 
 const CustomTagInput: React.FC<CustomInputProps<ExtendedOption>> = ({
   value,

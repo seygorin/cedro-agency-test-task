@@ -2,6 +2,7 @@ import React, {useState, useRef, useEffect} from 'react'
 import './Select.css'
 import ArrowDown from '../../assets/icons/arrow-down.svg'
 import ArrowUp from '../../assets/icons/arrow-up.svg'
+import SearchIcon from '../../assets/icons/pupa.svg'
 import X from '../../assets/icons/ex.svg'
 
 export type BaseOption = {
@@ -33,6 +34,11 @@ type SelectProps<T extends BaseOption> = {
   customLabel?: React.ComponentType<CustomLabelProps<T>>
   customInput?: React.ComponentType<CustomInputProps<T>>
   renderOption?: (option: T) => React.ReactNode
+  label?: string
+  hint?: string
+  useSearchIcon?: boolean
+  disabled?: boolean
+  showErrorState?: boolean
 }
 
 export type CustomInputProps<T extends BaseOption> = {
@@ -56,6 +62,7 @@ export type CustomLabelProps<T extends BaseOption> = {
   option: T
   onRemove: (option: T) => void
 }
+
 function Select<T extends Option>({
   options,
   value,
@@ -69,9 +76,15 @@ function Select<T extends Option>({
   customLabel: CustomLabel,
   customInput: CustomInput,
   renderOption,
+  label,
+  hint,
+  useSearchIcon = false,
+  disabled = false,
+  showErrorState = true,
 }: SelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [hasError, setHasError] = useState(false)
   const selectRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -89,9 +102,11 @@ function Select<T extends Option>({
   }, [])
 
   const handleToggle = () => {
-    setIsOpen(!isOpen)
-    if (!isOpen && inputRef.current) {
-      inputRef.current.focus()
+    if (!disabled && filteredOptions.length > 0) {
+      setIsOpen(!isOpen)
+      if (!isOpen && inputRef.current) {
+        inputRef.current.focus()
+      }
     }
   }
 
@@ -121,8 +136,15 @@ function Select<T extends Option>({
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value)
-    setIsOpen(true)
+    const newSearchTerm = e.target.value
+    setSearchTerm(newSearchTerm)
+    const newFilteredOptions = options.filter((option) =>
+      option.label.toLowerCase().includes(newSearchTerm.toLowerCase())
+    )
+    setHasError(
+      showErrorState && newFilteredOptions.length === 0 && newSearchTerm !== ''
+    )
+    setIsOpen(newFilteredOptions.length > 0 || (creatable && !showErrorState))
   }
 
   const handleCreateOption = () => {
@@ -151,56 +173,94 @@ function Select<T extends Option>({
     </div>
   )
 
+  const hasSelectedOptions =
+    multiple && Array.isArray(value) && value.length > 0
+
+  const getPlaceholder = () => {
+    if (hasSelectedOptions) {
+      return ''
+    }
+    if (value && !Array.isArray(value)) {
+      return value.label
+    }
+    return placeholder
+  }
+
   return (
-    <div className='select-container' ref={selectRef}>
-      <div className='select-input' onClick={handleToggle}>
+    <div
+      className={`select-container ${disabled ? 'disabled' : ''}`}
+      ref={selectRef}
+    >
+      {label && <label className='label'>{label}</label>}
+      <div
+        className={`select-input ${hasError ? 'error' : ''}`}
+        onClick={handleToggle}
+      >
         {CustomInput ? (
           <CustomInput
             value={value}
             searchTerm={searchTerm}
-            placeholder={placeholder}
+            placeholder={getPlaceholder()}
             onInputChange={handleInputChange}
             onRemove={handleRemove}
           />
         ) : (
-          <div className='selected-options'>
-            {multiple &&
-              Array.isArray(value) &&
-              value.map((v) =>
-                CustomLabel ? (
-                  <CustomLabel
-                    key={v.value}
-                    option={v}
-                    onRemove={handleRemove}
-                  />
-                ) : (
-                  <React.Fragment key={v.value}>
-                    {renderDefaultLabel(v)}
-                  </React.Fragment>
-                )
+          <>
+            {hasSelectedOptions && (
+              <div className='selected-options'>
+                {Array.isArray(value) &&
+                  value.map((v) =>
+                    CustomLabel ? (
+                      <CustomLabel
+                        key={v.value}
+                        option={v}
+                        onRemove={handleRemove}
+                      />
+                    ) : (
+                      <React.Fragment key={v.value}>
+                        {renderDefaultLabel(v)}
+                      </React.Fragment>
+                    )
+                  )}
+              </div>
+            )}
+            <div
+              className={`search-input-wrapper ${
+                useSearchIcon && hasSelectedOptions ? 'with-search-icon' : ''
+              }`}
+            >
+              {useSearchIcon && !hasSelectedOptions && (
+                <span className='search-icon'>
+                  <img src={SearchIcon} alt='Search' />
+                </span>
               )}
-            <input
-              ref={inputRef}
-              type='text'
-              value={searchTerm}
-              onChange={handleInputChange}
-              placeholder={
-                value && !Array.isArray(value) ? value.label : placeholder
-              }
-              readOnly={!searchable}
-              className='search-input'
-            />
-          </div>
+              <input
+                ref={inputRef}
+                type='text'
+                value={searchTerm}
+                onChange={handleInputChange}
+                placeholder={getPlaceholder()}
+                readOnly={!searchable || disabled}
+                disabled={disabled}
+                className='search-input'
+              />
+            </div>
+            {!useSearchIcon && (
+              <span className='arrow-icon'>
+                {isOpen ? (
+                  <img src={ArrowUp} alt='Arrow Up' />
+                ) : (
+                  <img src={ArrowDown} alt='Arrow Down' />
+                )}
+              </span>
+            )}
+          </>
         )}
-        <span>
-          {isOpen ? (
-            <img src={ArrowUp} alt='Arrow Up' />
-          ) : (
-            <img src={ArrowDown} alt='Arrow Down' />
-          )}
-        </span>
       </div>
+			{hint && <div className='select-hint'>{hint}</div>}
       {isOpen &&
+        !disabled &&
+        (filteredOptions.length > 0 || (creatable && !showErrorState)) &&
         (CustomDropdown ? (
           <CustomDropdown
             options={filteredOptions}

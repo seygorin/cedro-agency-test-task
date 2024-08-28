@@ -1,7 +1,7 @@
 import React from 'react'
-import {Option, CustomDropdownProps} from './Select/Select'
-import Checkmark from '../assets/icons/checkmark.svg'
-import '../styles/CustomComponents.css'
+import {Option, CustomDropdownProps} from '../Select'
+import Checkmark from '../../assets/icons/checkmark.svg'
+import '../../styles/CustomComponents.css'
 
 const ActionSheetDropdown: React.FC<CustomDropdownProps<Option>> = ({
   options,

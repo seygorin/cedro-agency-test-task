@@ -1,7 +1,7 @@
 import React from 'react'
-import {Option, CustomDropdownProps} from './Select/Select'
-import Plus from '../assets/icons/plus.svg'
-import '../styles/CustomComponents.css'
+import {Option, CustomDropdownProps} from '../Select'
+import Plus from '../../assets/icons/plus.svg'
+import '../../styles/CustomComponents.css'
 
 const ComboboxDropdown: React.FC<CustomDropdownProps<Option>> = ({
   options,
